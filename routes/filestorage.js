@@ -1,8 +1,8 @@
-// routes/fileRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const fileController = require("../controller/filestorage");
+const Authentication = require("../middleware/auth");
 const multerS3 = require("multer-s3");
 const s3Client = require("../config/s3");
 const path = require("path");
@@ -25,8 +25,8 @@ const storage = multerS3({
 const upload = multer({ storage });
 
 // Routes
-router.post("/", upload.array("files"), fileController.uploadFiles);
-router.get("/", fileController.getAllFiles);
-router.delete("/:id", fileController.deleteFile);
+router.post("/", upload.array("files"),Authentication, fileController.uploadFiles);
+router.get("/", Authentication,fileController.getAllFiles);
+router.delete("/:id", Authentication,fileController.deleteFile);
 
 module.exports = router;
