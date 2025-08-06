@@ -9,10 +9,13 @@ var cors = require("cors");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var customer = require("./routes/customer");
+var filestorage = require("./routes/filestorage");
 connectDB();
 
 var app = express();
 app.use(express.json({ limit: "50mb" })); // Adjust this as needed
+
+app.use("/public", express.static("public")); // Serve files
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(
   cors({
@@ -40,6 +43,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/customer", customer);
+app.use("/filestorage", filestorage);
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
