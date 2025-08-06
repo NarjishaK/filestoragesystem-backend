@@ -6,11 +6,15 @@ const s3Client = require("../config/s3");
 exports.uploadFiles = async (req, res) => {
   try {
     const files = req.files;
+    const { folder = "root", customerId } = req.body;
 
     if (!files || files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
+    if (!customerId) {
+      return res.status(400).json({ message: "Missing customerId" });
+    }
     const savedFiles = await Promise.all(
       files.map((file) =>
         File.create({
@@ -19,11 +23,11 @@ exports.uploadFiles = async (req, res) => {
           mimetype: file.mimetype,
           size: file.size,
           path: file.location,
-          folder: req.body.folder || "root",
+          folder: folder || "root",
+          customerId: customerId,
         })
       )
     );
-
     console.log("Files uploaded");
     res.status(201).json({ message: "Files uploaded", files: savedFiles });
   } catch (error) {
@@ -33,18 +37,26 @@ exports.uploadFiles = async (req, res) => {
 };
 
 
+// Get all files
 exports.getAllFiles = async (req, res) => {
   try {
-    const { folder } = req.query;
-    const filter = folder ? { folder } : {};
+    const { folder, customerId } = req.query; 
+    if (!customerId) {
+      return res.status(400).json({ message: "Missing customerId" });
+    }
+    const filter = { customerId };
+    if (folder) {
+      filter.folder = folder;
+    }
     const files = await File.find(filter).sort({ createdAt: -1 });
-    console.log("files from db");
+    console.log("Files fetched for customer:", customerId);
     res.json(files);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ message: "Failed to fetch files", error });
   }
 };
+
 
 
 exports.deleteFile = async (req, res) => {
