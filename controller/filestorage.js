@@ -57,7 +57,7 @@ exports.getAllFiles = async (req, res) => {
   }
 };
 
-
+// Delete file
 
 exports.deleteFile = async (req, res) => {
   try {
@@ -84,3 +84,20 @@ exports.deleteFile = async (req, res) => {
   }
 };
 
+
+
+//get file by id
+exports.getFileById = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) {
+      console.log("File not found");
+      return res.status(404).json({ message: "File not found" });
+    }
+    console.log("File fetched");
+    res.json(file);
+  } catch (error) {
+    console.error("Failed to fetch file", error);
+    res.status(500).json({ message: "Failed to fetch file", error });
+  }
+};
