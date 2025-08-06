@@ -323,3 +323,106 @@ exports.delete = asyncHandler(async (req, res) => {
   res.status(200).json(customer);
 });
 
+
+// Send OTP for password reset
+exports.sendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const customer = await Customer.findOne({ email });
+    if (!customer) {
+      console.log("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = OTPService.generateOTP();
+    // Call the modified sendEmailOTP and pass email and otp
+    const response = await OTPService.sendEmailOTP(email, otp);
+
+    if (response.status !== 200) {
+      console.error("Error sending OTP:", response.message);
+      return res.status(response.status).json({ message: response.message });
+    }
+
+    res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    res.status(500).json({ message: "Error sending OTP", error });
+  }
+};
+
+// Verify OTP
+exports.verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    const isValidOTP = OTPService.verifyOTP(email, otp);
+    if (!isValidOTP) {
+      console.log("Invalid OTP");
+
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+    console.log("OTP verified");
+
+    res.status(200).json({ message: "OTP verified" });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "Error verifying OTP", error });
+  }
+};
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  try {
+    const customer = await Customer.findOne({ email });
+    if (!customer) {
+      console.log("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    customer.password = hashedPassword;
+    await customer.save();
+
+    console.log("Password updated successfully");
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ message: "Error updating password", error });
+  }
+};
+
+//update password
+exports.updatePassword = async (req, res) => {
+  const { id } = req.params;
+  const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+  if (newPassword !== confirmNewPassword) {
+    console.log("Passwords do not match");
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  try {
+    const customer = await Customer.findById(id);
+    if (!customer)
+      return res.status(404).json({ message: "Customer not found" });
+
+    const isMatch = await bcrypt.compare(oldPassword, customer.password);
+    if (!isMatch) {
+      console.log("Incorrect old password");
+
+      return res.status(401).json({ message: "Incorrect old password" });
+    }
+
+    customer.password = newPassword;
+    await customer.save();
+
+    console.log("Password updated successfully");
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
