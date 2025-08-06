@@ -1,10 +1,7 @@
-// controllers/fileController.js
 const File = require("../models/filestorage");
-const fs = require("fs");
-const path = require("path");
+
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const s3Client = require("../config/s3");
-const { log } = require("console");
 
 exports.uploadFiles = async (req, res) => {
   try {
